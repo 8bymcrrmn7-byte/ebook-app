@@ -1,75 +1,77 @@
+
 <!DOCTYPE html>
 <html>
 <head>
 <meta charset="UTF-8">
-<title>電子書 App</title>
+<title>電子書專題 App</title>
 
 <style>
 body{
   margin:0;
   font-family:sans-serif;
   transition:0.3s;
+  background:#f5f5f5;
 }
 
-/* 上方欄 */
+/* 頂部 */
 #topbar{
   padding:10px;
   text-align:center;
-  background:#1e1e1e;
+  background:#222;
   color:white;
-}
-
-/* 閱讀區 */
-#viewer{
-  height:75vh;
-  padding:30px;
-  font-size:20px;
-  line-height:1.6;
-  background:white;
-  color:black;
-  transition:0.3s;
-}
-
-/* 控制區 */
-#controls{
-  text-align:center;
-  padding:10px;
-  background:#1e1e1e;
-}
-
-/* 按鈕 */
-button{
-  padding:10px 15px;
-  margin:5px;
 }
 
 /* 書架 */
 #bookshelf{
-  display:none;
   padding:20px;
 }
 
 .book{
   padding:15px;
   margin:10px;
-  background:#ddd;
+  background:white;
+  border-radius:10px;
   cursor:pointer;
 }
 
-/* 夜間模式 */
-.dark #viewer{
-  background:#111;
+/* 閱讀區 */
+#viewer{
+  display:none;
+  height:70vh;
+  padding:30px;
+  background:white;
+  font-size:20px;
+  line-height:1.6;
+}
+
+/* 控制區 */
+#controls{
+  display:none;
+  text-align:center;
+  padding:10px;
+  background:#222;
   color:white;
 }
 
+button{
+  padding:10px;
+  margin:5px;
+}
+
+/* 夜間模式 */
 .dark{
   background:#111;
   color:white;
 }
 
-.dark #topbar,
-.dark #controls{
-  background:black;
+.dark #viewer{
+  background:#111;
+  color:white;
+}
+
+.dark .book{
+  background:#333;
+  color:white;
 }
 </style>
 </head>
@@ -77,15 +79,13 @@ button{
 <body>
 
 <div id="topbar">
-📚 電子書 App
+📚 電子書專題 App
 <button onclick="toggleDark()">🌙</button>
-<button onclick="backToShelf()">📖 書架</button>
+<button onclick="backShelf()">🏠</button>
 </div>
 
 <!-- 書架 -->
-<div id="bookshelf">
-  <div class="book" onclick="openBook(0)">📘 測試書 1</div>
-</div>
+<div id="bookshelf"></div>
 
 <!-- 閱讀區 -->
 <div id="viewer"></div>
@@ -94,35 +94,55 @@ button{
 <div id="controls">
   <button onclick="prev()">⬅</button>
   <button onclick="next()">➡</button>
-  <div id="pageinfo"></div>
+  <button onclick="fontUp()">A+</button>
+  <button onclick="fontDown()">A-</button>
+  <div id="info"></div>
 </div>
 
 <script>
-/* 書本資料 */
+/* 📚 書庫 */
 const books = [
   {
-    title:"測試書 1",
+    title:"📘 測試書",
     pages:[
-      "📖 第1頁：你好，這是第一本書",
-      "📖 第2頁：你已經完成電子書 App",
-      "📖 第3頁：可以翻頁了",
-      "📖 第4頁：還可以升級更多功能"
+      "第1頁：你好，這是第一本書",
+      "第2頁：你已經做出電子書 App",
+      "第3頁：可以翻頁",
+      "第4頁：還可以升級成專題"
+    ]
+  },
+  {
+    title:"📗 第二本書",
+    pages:[
+      "第1頁：這是第二本書",
+      "第2頁：多書系統已完成",
+      "第3頁：你已經在做 App 等級作品"
     ]
   }
 ];
 
-let currentBook = null;
+let current = null;
 let page = 0;
+let fontSize = 20;
 
-/* 開書架 */
-document.getElementById("bookshelf").style.display="block";
-document.getElementById("viewer").style.display="none";
-document.getElementById("controls").style.display="none";
+/* 建書架 */
+function renderShelf(){
+  let box = document.getElementById("bookshelf");
+  box.innerHTML = "";
 
-/* 打開書 */
-function openBook(index){
-  currentBook = books[index];
-  page = 0;
+  books.forEach((b,i)=>{
+    let div = document.createElement("div");
+    div.className = "book";
+    div.innerText = b.title;
+    div.onclick = ()=>openBook(i);
+    box.appendChild(div);
+  });
+}
+
+/* 開書 */
+function openBook(i){
+  current = books[i];
+  page = parseInt(localStorage.getItem("p_"+i)) || 0;
 
   document.getElementById("bookshelf").style.display="none";
   document.getElementById("viewer").style.display="block";
@@ -132,26 +152,27 @@ function openBook(index){
 }
 
 /* 回書架 */
-function backToShelf(){
+function backShelf(){
   document.getElementById("bookshelf").style.display="block";
   document.getElementById("viewer").style.display="none";
   document.getElementById("controls").style.display="none";
 }
 
-/* 顯示頁面 */
+/* 顯示頁 */
 function render(){
-  document.getElementById("viewer").innerText =
-    currentBook.pages[page];
+  document.getElementById("viewer").style.fontSize = fontSize+"px";
+  document.getElementById("viewer").innerText = current.pages[page];
 
-  document.getElementById("pageinfo").innerText =
-    `第 ${page+1} / ${currentBook.pages.length} 頁`;
+  document.getElementById("info").innerText =
+    `第 ${page+1} / ${current.pages.length} 頁`;
+
+  localStorage.setItem("p_"+books.indexOf(current), page);
 }
 
 /* 翻頁 */
 function next(){
-  if(page < currentBook.pages.length - 1){
+  if(page < current.pages.length-1){
     page++;
-    save();
     render();
   }
 }
@@ -159,9 +180,19 @@ function next(){
 function prev(){
   if(page > 0){
     page--;
-    save();
     render();
   }
+}
+
+/* 字體 */
+function fontUp(){
+  fontSize += 2;
+  render();
+}
+
+function fontDown(){
+  fontSize -= 2;
+  render();
 }
 
 /* 夜間模式 */
@@ -169,17 +200,8 @@ function toggleDark(){
   document.body.classList.toggle("dark");
 }
 
-/* 記錄進度 */
-function save(){
-  localStorage.setItem("book_progress", page);
-}
-
-/* 讀取進度 */
-function load(){
-  let p = localStorage.getItem("book_progress");
-  if(p !== null) page = parseInt(p);
-}
-
+/* 初始化 */
+renderShelf();
 </script>
 
 </body>
