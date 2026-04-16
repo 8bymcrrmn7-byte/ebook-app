@@ -2,194 +2,102 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>電子書 App（可新增書）</title>
+<title>電子書搜尋 App</title>
+
+<script src="https://cdn.jsdelivr.net/npm/epubjs/dist/epub.min.js"></script>
 
 <style>
 body{
   margin:0;
   font-family:sans-serif;
-  background:#f2f2f2;
 }
 
-/* 上方 */
-#topbar{
+#top{
+  padding:10px;
   background:#222;
   color:white;
-  padding:10px;
   text-align:center;
 }
 
-/* 輸入區 */
-#inputArea{
-  padding:10px;
-  background:white;
-}
-
-input, textarea{
-  width:95%;
-  padding:10px;
-  margin:5px;
-}
-
-/* 書架 */
-#bookshelf{
+#searchBox{
   padding:10px;
 }
 
-.book{
-  background:white;
-  padding:15px;
-  margin:10px;
-  border-radius:10px;
-  cursor:pointer;
-}
-
-/* 閱讀器 */
-#reader{
-  display:none;
-  padding:20px;
-  background:white;
-  height:70vh;
-  font-size:20px;
-}
-
-/* 控制 */
-#controls{
-  display:none;
-  text-align:center;
-  background:#222;
-  color:white;
+input{
+  width:70%;
   padding:10px;
 }
 
 button{
   padding:10px;
-  margin:5px;
+}
+
+#viewer{
+  height:80vh;
 }
 </style>
 </head>
 
 <body>
 
-<div id="topbar">
-📚 電子書 App（可新增書）
+<div id="top">
+📚 輸入書名自動閱讀
 </div>
 
-<!-- 📥 新增書 -->
-<div id="inputArea">
-  <input id="title" placeholder="輸入書名">
-  <textarea id="content" rows="5" placeholder="輸入內容（用 / 分頁）"></textarea>
-  <button onclick="addBook()">➕ 新增書</button>
+<div id="searchBox">
+<input id="bookname" placeholder="輸入書名（例如 moby dick）">
+<button onclick="loadBook()">搜尋/開書</button>
 </div>
 
-<!-- 📚 書架 -->
-<div id="bookshelf"></div>
-
-<!-- 📖 閱讀 -->
-<div id="reader"></div>
-
-<div id="controls">
-  <button onclick="prev()">⬅</button>
-  <button onclick="next()">➡</button>
-  <button onclick="back()">🏠</button>
-  <div id="pageinfo"></div>
-</div>
+<div id="viewer"></div>
 
 <script>
 
-let books = JSON.parse(localStorage.getItem("books")) || [];
+/* 📚 書庫對照表（重點） */
+const bookDB = {
+  "moby dick":"https://cdn.jsdelivr.net/gh/futurepress/epubjs-test-book/books/moby-dick.epub",
+  "alice":"https://cdn.jsdelivr.net/gh/futurepress/epubjs-test-book/books/alice.epub",
+  "pride":"https://standardebooks.org/ebooks/jane-austen/pride-and-prejudice/downloads/jane-austen_pride-and-prejudice.epub"
+};
 
-let currentBook = null;
-let page = 0;
+let rendition;
 
-/* 建書架 */
-function renderShelf(){
-  let box = document.getElementById("bookshelf");
-  box.innerHTML = "";
+/* 📖 載入書 */
+function loadBook(){
+  let name = document.getElementById("bookname").value.toLowerCase();
 
-  books.forEach((b,i)=>{
-    let div = document.createElement("div");
-    div.className="book";
-    div.innerText=b.title;
-    div.onclick=()=>openBook(i);
-    box.appendChild(div);
-  });
-}
+  let url = bookDB[name];
 
-/* 新增書 */
-function addBook(){
-  let title = document.getElementById("title").value;
-  let content = document.getElementById("content").value;
-
-  if(!title || !content){
-    alert("請輸入完整");
+  if(!url){
+    alert("找不到這本書，請輸入：moby dick / alice / pride");
     return;
   }
 
-  let pages = content.split("/"); // 用 / 分頁
+  document.getElementById("viewer").innerHTML = "";
 
-  books.push({
-    title:title,
-    pages:pages
+  let book = ePub(url);
+
+  rendition = book.renderTo("viewer", {
+    width:"100%",
+    height:"100%"
   });
 
-  localStorage.setItem("books", JSON.stringify(books));
-
-  document.getElementById("title").value="";
-  document.getElementById("content").value="";
-
-  renderShelf();
+  rendition.display();
 }
 
-/* 打開書 */
-function openBook(i){
-  currentBook = books[i];
-  page = 0;
+/* 👆 滑動翻頁（簡單版） */
+document.addEventListener("click", function(e){
+  if(!rendition) return;
 
-  document.getElementById("inputArea").style.display="none";
-  document.getElementById("bookshelf").style.display="none";
-  document.getElementById("reader").style.display="block";
-  document.getElementById("controls").style.display="block";
+  let x = e.clientX;
+  let w = window.innerWidth;
 
-  render();
-}
-
-/* 回首頁 */
-function back(){
-  document.getElementById("inputArea").style.display="block";
-  document.getElementById("bookshelf").style.display="block";
-  document.getElementById("reader").style.display="none";
-  document.getElementById("controls").style.display="none";
-
-  renderShelf();
-}
-
-/* 顯示 */
-function render(){
-  document.getElementById("reader").innerText =
-    currentBook.pages[page];
-
-  document.getElementById("pageinfo").innerText =
-    `第 ${page+1} / ${currentBook.pages.length} 頁`;
-}
-
-/* 翻頁 */
-function next(){
-  if(page < currentBook.pages.length-1){
-    page++;
-    render();
+  if(x < w/2){
+    rendition.prev();
+  }else{
+    rendition.next();
   }
-}
-
-function prev(){
-  if(page > 0){
-    page--;
-    render();
-  }
-}
-
-/* 初始化 */
-renderShelf();
+});
 
 </script>
 
