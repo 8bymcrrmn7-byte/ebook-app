@@ -1,56 +1,106 @@
-
-
-
-
-
 <!DOCTYPE html>
 <html>
 <head>
 <meta charset="UTF-8">
-<title>閱讀器測試</title>
+<title>電子書閱讀器</title>
 
 <style>
-body { font-family: sans-serif; background:#111; color:white; margin:0; }
-#viewer { padding:20px; background:white; color:black; height:90vh; overflow:auto; }
-button { padding:10px; margin:5px; }
+body{
+  margin:0;
+  font-family:sans-serif;
+  background:#111;
+  color:white;
+}
+
+#topbar{
+  padding:10px;
+  text-align:center;
+  background:#1e1e1e;
+}
+
+#viewer{
+  height:85vh;
+  background:white;
+  color:black;
+}
+
+#footer{
+  padding:10px;
+  text-align:center;
+  background:#1e1e1e;
+}
+
+button{
+  padding:8px 15px;
+  margin:5px;
+}
+
+#progress{
+  width:80%;
+}
 </style>
+
+<script src="https://cdn.jsdelivr.net/npm/epubjs/dist/epub.min.js"></script>
 </head>
 
 <body>
 
-<div style="text-align:center;">
-  <button onclick="prev()">⬅</button>
-  <button onclick="next()">➡</button>
+<div id="topbar">
+  📖 <span id="title">電子書閱讀器</span>
 </div>
 
 <div id="viewer"></div>
 
+<div id="footer">
+  <button onclick="prev()">⬅</button>
+  <button onclick="next()">➡</button>
+  <br>
+
+  📊 <progress id="progress" value="0" max="100"></progress>
+  <div id="pageinfo">第 1 頁</div>
+</div>
+
 <script>
-const pages = [
-  "📖 第1頁：這是測試書內容",
-  "📖 第2頁：你現在的閱讀器已經可以翻頁",
-  "📖 第3頁：代表功能是正常的",
-  "📖 第4頁：下一步才是接 EPUB",
-  "📖 第5頁：恭喜你成功"
-];
+const book = ePub("https://cdn.jsdelivr.net/gh/futurepress/epubjs-test-book/books/moby-dick.epub");
 
-let i = 0;
+const rendition = book.renderTo("viewer", {
+  width: "100%",
+  height: "100%",
+  flow: "paginated"
+});
 
-function render(){
-  document.getElementById("viewer").innerText = pages[i];
+let currentLocation;
+
+book.ready.then(() => {
+  rendition.display();
+
+  book.locations.generate(100).then(() => {
+    updateProgress();
+  });
+});
+
+rendition.on("relocated", (location) => {
+  currentLocation = location;
+  updateProgress();
+});
+
+function updateProgress(){
+  if (!book.locations) return;
+
+  const percentage = book.locations.percentageFromCfi(currentLocation?.start.cfi || 0);
+  document.getElementById("progress").value = percentage * 100;
+
+  const current = book.locations.locationFromCfi(currentLocation?.start.cfi || 0);
+  document.getElementById("pageinfo").innerText = `閱讀進度 ${Math.floor(percentage*100)}%`;
 }
 
 function next(){
-  if(i < pages.length - 1) i++;
-  render();
+  rendition.next();
 }
 
 function prev(){
-  if(i > 0) i--;
-  render();
+  rendition.prev();
 }
-
-render();
 </script>
 
 </body>
