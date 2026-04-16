@@ -1,65 +1,56 @@
+
+
+
+
+
 <!DOCTYPE html>
 <html>
 <head>
 <meta charset="UTF-8">
-<title>電子書閱讀器</title>
-
-<script src="https://cdn.jsdelivr.net/npm/epubjs/dist/epub.min.js"></script>
+<title>閱讀器測試</title>
 
 <style>
-body {
-  margin: 0;
-  font-family: sans-serif;
-  background: #111;
-  color: white;
-}
-
-#viewer {
-  width: 100vw;
-  height: 90vh;
-  background: white;
-}
-
-#controls {
-  text-align: center;
-  padding: 10px;
-}
-
-button {
-  padding: 10px;
-  margin: 5px;
-}
+body { font-family: sans-serif; background:#111; color:white; margin:0; }
+#viewer { padding:20px; background:white; color:black; height:90vh; overflow:auto; }
+button { padding:10px; margin:5px; }
 </style>
 </head>
 
 <body>
 
-<div id="controls">
-  <button onclick="prevPage()">⬅ 上一頁</button>
-  <button onclick="nextPage()">下一頁 ➡</button>
+<div style="text-align:center;">
+  <button onclick="prev()">⬅</button>
+  <button onclick="next()">➡</button>
 </div>
 
 <div id="viewer"></div>
 
 <script>
-const book = ePub("https://cdn.jsdelivr.net/gh/futurepress/epubjs-test-book/books/moby-dick.epub");
+const pages = [
+  "📖 第1頁：這是測試書內容",
+  "📖 第2頁：你現在的閱讀器已經可以翻頁",
+  "📖 第3頁：代表功能是正常的",
+  "📖 第4頁：下一步才是接 EPUB",
+  "📖 第5頁：恭喜你成功"
+];
 
-const rendition = book.renderTo("viewer", {
-  width: "100%",
-  height: "100%"
-});
+let i = 0;
 
-book.ready.then(() => {
-  rendition.display();
-});
-
-function nextPage(){
-  rendition.next();
+function render(){
+  document.getElementById("viewer").innerText = pages[i];
 }
 
-function prevPage(){
-  rendition.prev();
+function next(){
+  if(i < pages.length - 1) i++;
+  render();
 }
+
+function prev(){
+  if(i > 0) i--;
+  render();
+}
+
+render();
 </script>
 
 </body>
