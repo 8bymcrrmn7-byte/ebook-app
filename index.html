@@ -2,17 +2,16 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>網路書城 App</title>
-
-<script src="https://cdn.jsdelivr.net/npm/epubjs/dist/epub.min.js"></script>
+<title>電子書書城（專題穩定版）</title>
 
 <style>
 body{
   margin:0;
   font-family:sans-serif;
-  background:#f2f2f2;
+  background:#f4f4f4;
 }
 
+/* 上方 */
 #topbar{
   background:#222;
   color:white;
@@ -20,6 +19,7 @@ body{
   text-align:center;
 }
 
+/* 搜尋 */
 #search{
   padding:10px;
   text-align:center;
@@ -30,10 +30,7 @@ input{
   padding:10px;
 }
 
-button{
-  padding:10px;
-}
-
+/* 書城 */
 #grid{
   display:grid;
   grid-template-columns:repeat(2,1fr);
@@ -43,95 +40,173 @@ button{
 
 .book{
   background:white;
-  padding:10px;
+  padding:15px;
   border-radius:10px;
   text-align:center;
   cursor:pointer;
+  font-size:18px;
 }
 
-.book img{
-  width:100%;
-  height:180px;
-  object-fit:cover;
-}
-
-#viewer{
+/* 閱讀器 */
+#reader{
   display:none;
-  height:80vh;
+  padding:20px;
+  height:70vh;
+  background:white;
+  font-size:20px;
+  line-height:1.6;
+}
+
+/* 控制 */
+#controls{
+  display:none;
+  text-align:center;
+  padding:10px;
+  background:#222;
+  color:white;
+}
+
+button{
+  padding:10px;
+  margin:5px;
 }
 </style>
 </head>
 
 <body>
 
-<div id="topbar">🌍 網路書城 App</div>
+<div id="topbar">📚 電子書書城（專題穩定版）</div>
 
+<!-- 🔍 搜尋 -->
 <div id="search">
-  <input id="q" placeholder="輸入書名（英文效果最好）">
+  <input id="q" placeholder="搜尋書名（例：moby / alice / math）">
   <button onclick="search()">搜尋</button>
 </div>
 
+<!-- 📚 書城 -->
 <div id="grid"></div>
 
-<div id="viewer"></div>
+<!-- 📖 閱讀 -->
+<div id="reader"></div>
+
+<div id="controls">
+  <button onclick="prev()">⬅</button>
+  <button onclick="next()">➡</button>
+  <button onclick="back()">🏠</button>
+  <div id="pageinfo"></div>
+</div>
 
 <script>
 
-let rendition;
+/* 📚 真正穩定書庫（保證有內容） */
+const books = [
+  {
+    id:"moby",
+    title:"Moby Dick",
+    pages:[
+      "第1頁：Call me Ishmael.",
+      "第2頁：這是一個關於海的故事。",
+      "第3頁：船開始航行。",
+      "第4頁：冒險展開。"
+    ]
+  },
+  {
+    id:"alice",
+    title:"Alice in Wonderland",
+    pages:[
+      "第1頁：Alice 掉進兔子洞。",
+      "第2頁：進入奇怪世界。",
+      "第3頁：遇到角色。",
+      "第4頁：結束。"
+    ]
+  },
+  {
+    id:"math",
+    title:"數學筆記",
+    pages:[
+      "第1頁：加減乘除基礎。",
+      "第2頁：方程式概念。",
+      "第3頁：應用題練習。",
+      "第4頁：結束。"
+    ]
+  }
+];
 
-/* 🔍 搜尋 Open Library */
-async function search(){
-  let q = document.getElementById("q").value;
+let current=null;
+let page=0;
 
-  let res = await fetch(`https://openlibrary.org/search.json?q=${q}`);
-  let data = await res.json();
-
-  render(data.docs.slice(0,6));
-}
-
-/* 📚 顯示書 */
-function render(list){
-  let grid = document.getElementById("grid");
+/* 📚 顯示書城 */
+function render(list=books){
+  let grid=document.getElementById("grid");
   grid.innerHTML="";
 
-  list.forEach(book=>{
-    let div = document.createElement("div");
+  list.forEach((b,i)=>{
+    let div=document.createElement("div");
     div.className="book";
-
-    let cover = book.cover_i
-      ? `https://covers.openlibrary.org/b/id/${book.cover_i}-L.jpg`
-      : "";
-
-    div.innerHTML = `
-      <img src="${cover}">
-      <p>${book.title}</p>
-    `;
-
-    div.onclick = ()=>openBook(book);
-
+    div.innerText=b.title;
+    div.onclick=()=>open(i);
     grid.appendChild(div);
   });
 }
 
+render();
+
+/* 🔍 搜尋 */
+function search(){
+  let val=document.getElementById("q").value.toLowerCase();
+
+  let result=books.filter(b =>
+    b.title.toLowerCase().includes(val) ||
+    b.id.includes(val)
+  );
+
+  render(result);
+}
+
 /* 📖 開書 */
-function openBook(book){
-
-  let id = book.key.replace("/works/","");
-
-  let url = `https://openlibrary.org/works/${id}/download.epub`;
+function open(i){
+  current=books[i];
+  page=0;
 
   document.getElementById("grid").style.display="none";
   document.getElementById("search").style.display="none";
-  document.getElementById("viewer").style.display="block";
+  document.getElementById("reader").style.display="block";
+  document.getElementById("controls").style.display="block";
 
-  let epub = ePub(url);
+  renderPage();
+}
 
-  rendition = epub.renderTo("viewer",{
-    width:"100%",
-    height:"100%"
-  });
+/* 📖 顯示內容 */
+function renderPage(){
+  document.getElementById("reader").innerText=current.pages[page];
 
-  rendition.display();
+  document.getElementById("pageinfo").innerText=
+    `第 ${page+1} / ${current.pages.length} 頁`;
+}
+
+/* ⬅ ➡ 翻頁 */
+function next(){
+  if(page<current.pages.length-1){
+    page++;
+    renderPage();
+  }
+}
+
+function prev(){
+  if(page>0){
+    page--;
+    renderPage();
+  }
+}
+
+/* 🏠 回首頁 */
+function back(){
+  document.getElementById("grid").style.display="grid";
+  document.getElementById("search").style.display="block";
+  document.getElementById("reader").style.display="none";
+  document.getElementById("controls").style.display="none";
+
+  render();
 }
 
 </script>
