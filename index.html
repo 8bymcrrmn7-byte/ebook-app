@@ -1,8 +1,14 @@
+
+
+
+
 <!DOCTYPE html>
 <html>
 <head>
 <meta charset="UTF-8">
 <title>電子書閱讀器</title>
+
+<script src="https://cdn.jsdelivr.net/npm/epubjs/dist/epub.min.js"></script>
 
 <style>
 body{
@@ -19,45 +25,32 @@ body{
 }
 
 #viewer{
-  height:85vh;
+  height:90vh;
   background:white;
-  color:black;
 }
 
 #footer{
-  padding:10px;
   text-align:center;
+  padding:10px;
   background:#1e1e1e;
 }
 
 button{
-  padding:8px 15px;
+  padding:10px;
   margin:5px;
 }
-
-#progress{
-  width:80%;
-}
 </style>
-
-<script src="https://cdn.jsdelivr.net/npm/epubjs/dist/epub.min.js"></script>
 </head>
 
 <body>
 
-<div id="topbar">
-  📖 <span id="title">電子書閱讀器</span>
-</div>
+<div id="topbar">📖 電子書閱讀器</div>
 
 <div id="viewer"></div>
 
 <div id="footer">
   <button onclick="prev()">⬅</button>
   <button onclick="next()">➡</button>
-  <br>
-
-  📊 <progress id="progress" value="0" max="100"></progress>
-  <div id="pageinfo">第 1 頁</div>
 </div>
 
 <script>
@@ -69,30 +62,9 @@ const rendition = book.renderTo("viewer", {
   flow: "paginated"
 });
 
-let currentLocation;
-
 book.ready.then(() => {
   rendition.display();
-
-  book.locations.generate(100).then(() => {
-    updateProgress();
-  });
 });
-
-rendition.on("relocated", (location) => {
-  currentLocation = location;
-  updateProgress();
-});
-
-function updateProgress(){
-  if (!book.locations) return;
-
-  const percentage = book.locations.percentageFromCfi(currentLocation?.start.cfi || 0);
-  document.getElementById("progress").value = percentage * 100;
-
-  const current = book.locations.locationFromCfi(currentLocation?.start.cfi || 0);
-  document.getElementById("pageinfo").innerText = `閱讀進度 ${Math.floor(percentage*100)}%`;
-}
 
 function next(){
   rendition.next();
