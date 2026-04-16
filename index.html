@@ -1,52 +1,8 @@
-
-
-
-
-
-<!DOCTYPE html>
-<html>
-<head>
-<meta charset="UTF-8">
-<title>電子書閱讀器</title>
-
 <script src="https://cdn.jsdelivr.net/npm/epubjs/dist/epub.min.js"></script>
 
-<style>
-body {
-  margin: 0;
-  font-family: sans-serif;
-  background: #111;
-  color: white;
-}
-
-#viewer {
-  width: 100%;
-  height: 90vh;
-}
-
-#controls {
-  text-align: center;
-  padding: 10px;
-}
-
-button {
-  padding: 10px;
-  margin: 5px;
-}
-</style>
-</head>
-
-<body>
-
-<div id="controls">
-  <button onclick="prevPage()">⬅ 上一頁</button>
-  <button onclick="nextPage()">下一頁 ➡</button>
-</div>
-
-<div id="viewer"></div>
-
 <script>
-let book = ePub("https://standardebooks.org/ebooks/jane-austen/pride-and-prejudice/downloads/jane-austen_pride-and-prejudice.epub");
+let book = ePub("https://cdn.jsdelivr.net/gh/futurepress/epubjs-test-book/books/moby-dick.epub");
+
 let rendition = book.renderTo("viewer", {
   width: "100%",
   height: "100%"
@@ -62,6 +18,3 @@ function prevPage(){
   rendition.prev();
 }
 </script>
-
-</body>
-</html>
