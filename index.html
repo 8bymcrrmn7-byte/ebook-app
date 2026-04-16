@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>電子書搜尋 App</title>
+<title>網路書城 App</title>
 
 <script src="https://cdn.jsdelivr.net/npm/epubjs/dist/epub.min.js"></script>
 
@@ -10,17 +10,19 @@
 body{
   margin:0;
   font-family:sans-serif;
+  background:#f2f2f2;
 }
 
-#top{
-  padding:10px;
+#topbar{
   background:#222;
   color:white;
+  padding:10px;
   text-align:center;
 }
 
-#searchBox{
+#search{
   padding:10px;
+  text-align:center;
 }
 
 input{
@@ -32,7 +34,29 @@ button{
   padding:10px;
 }
 
+#grid{
+  display:grid;
+  grid-template-columns:repeat(2,1fr);
+  gap:10px;
+  padding:10px;
+}
+
+.book{
+  background:white;
+  padding:10px;
+  border-radius:10px;
+  text-align:center;
+  cursor:pointer;
+}
+
+.book img{
+  width:100%;
+  height:180px;
+  object-fit:cover;
+}
+
 #viewer{
+  display:none;
   height:80vh;
 }
 </style>
@@ -40,64 +64,75 @@ button{
 
 <body>
 
-<div id="top">
-📚 輸入書名自動閱讀
+<div id="topbar">🌍 網路書城 App</div>
+
+<div id="search">
+  <input id="q" placeholder="輸入書名（英文效果最好）">
+  <button onclick="search()">搜尋</button>
 </div>
 
-<div id="searchBox">
-<input id="bookname" placeholder="輸入書名（例如 moby dick）">
-<button onclick="loadBook()">搜尋/開書</button>
-</div>
+<div id="grid"></div>
 
 <div id="viewer"></div>
 
 <script>
 
-/* 📚 書庫對照表（重點） */
-const bookDB = {
-  "moby dick":"https://cdn.jsdelivr.net/gh/futurepress/epubjs-test-book/books/moby-dick.epub",
-  "alice":"https://cdn.jsdelivr.net/gh/futurepress/epubjs-test-book/books/alice.epub",
-  "pride":"https://standardebooks.org/ebooks/jane-austen/pride-and-prejudice/downloads/jane-austen_pride-and-prejudice.epub"
-};
-
 let rendition;
 
-/* 📖 載入書 */
-function loadBook(){
-  let name = document.getElementById("bookname").value.toLowerCase();
+/* 🔍 搜尋 Open Library */
+async function search(){
+  let q = document.getElementById("q").value;
 
-  let url = bookDB[name];
+  let res = await fetch(`https://openlibrary.org/search.json?q=${q}`);
+  let data = await res.json();
 
-  if(!url){
-    alert("找不到這本書，請輸入：moby dick / alice / pride");
-    return;
-  }
+  render(data.docs.slice(0,6));
+}
 
-  document.getElementById("viewer").innerHTML = "";
+/* 📚 顯示書 */
+function render(list){
+  let grid = document.getElementById("grid");
+  grid.innerHTML="";
 
-  let book = ePub(url);
+  list.forEach(book=>{
+    let div = document.createElement("div");
+    div.className="book";
 
-  rendition = book.renderTo("viewer", {
+    let cover = book.cover_i
+      ? `https://covers.openlibrary.org/b/id/${book.cover_i}-L.jpg`
+      : "";
+
+    div.innerHTML = `
+      <img src="${cover}">
+      <p>${book.title}</p>
+    `;
+
+    div.onclick = ()=>openBook(book);
+
+    grid.appendChild(div);
+  });
+}
+
+/* 📖 開書 */
+function openBook(book){
+
+  let id = book.key.replace("/works/","");
+
+  let url = `https://openlibrary.org/works/${id}/download.epub`;
+
+  document.getElementById("grid").style.display="none";
+  document.getElementById("search").style.display="none";
+  document.getElementById("viewer").style.display="block";
+
+  let epub = ePub(url);
+
+  rendition = epub.renderTo("viewer",{
     width:"100%",
     height:"100%"
   });
 
   rendition.display();
 }
-
-/* 👆 滑動翻頁（簡單版） */
-document.addEventListener("click", function(e){
-  if(!rendition) return;
-
-  let x = e.clientX;
-  let w = window.innerWidth;
-
-  if(x < w/2){
-    rendition.prev();
-  }else{
-    rendition.next();
-  }
-});
 
 </script>
 
